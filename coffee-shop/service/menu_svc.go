@@ -33,7 +33,7 @@ func (s *MenuService) GetItems() ([]model.Item, error) {
 	return items, nil
 }
 
-func (s *MenuService) Print(items []model.Item) {
+func (s *MenuService) PrintConsole(items []model.Item) {
 	for _, v := range items {
 		if s.language == en {
 			fmt.Printf("%v.%v - %.2fUAH\n", v.Id, v.Name, v.Price)

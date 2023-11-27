@@ -48,16 +48,16 @@ func (s *OrderService) Create(items []model.Item) error {
 func (s *OrderService) CreateMany(buckets [][]model.Item) error {
 	var wg sync.WaitGroup
 
-	for _, items := range buckets {
+	for _, v := range buckets {
 		wg.Add(1)
 
-		go func() {
+		go func(items []model.Item) {
 			defer wg.Done()
 			err := s.Create(items)
 			if err != nil {
 				fmt.Println(err)
 			}
-		}()
+		}(v)
 	}
 
 	wg.Wait()
