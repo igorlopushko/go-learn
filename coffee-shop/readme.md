@@ -1,0 +1,1 @@
+Coffee shop is a small project to learn Go language by example
