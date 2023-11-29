@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	lang string
+	lang string = "en"
 )
 
 func main() {
@@ -25,21 +25,21 @@ func main() {
 		fmt.Println(err)
 	}
 
-	menuSvc.PrintConsole(m)
+	menuSvc.Print(m)
 
 	// create order service and place orders
 	orderSvc := service.NewOrderService(r)
-	err = orderSvc.Create(m[:2])
+	_, err = orderSvc.Create(m[:2])
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	err = orderSvc.Create(m[1:2])
+	_, err = orderSvc.Create(m[1:2])
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	err = orderSvc.Create(m[2:])
+	_, err = orderSvc.Create(m[2:])
 	if err != nil {
 		fmt.Println(err)
 	}

@@ -13,7 +13,6 @@ type FileRepo struct{}
 
 func (r FileRepo) Load(lang string) ([]model.Item, error) {
 	jsonFile, err := os.Open(fmt.Sprintf("data/data-%v.json", lang))
-
 	if err != nil {
 		return nil, err
 	}
@@ -32,8 +31,9 @@ func (r FileRepo) Load(lang string) ([]model.Item, error) {
 	return items, nil
 }
 
-func (r FileRepo) Save(order model.Order) error {
-	file, err := os.Create(fmt.Sprintf("data/order-%v.json", order.Id))
+func (r FileRepo) Save(order *model.Order) error {
+	fileName := fmt.Sprintf("data/orders-%v.json", order.Id)
+	file, err := os.Create(fileName)
 	if err != nil {
 		return err
 	}

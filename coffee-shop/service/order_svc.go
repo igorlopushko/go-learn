@@ -11,7 +11,6 @@ import (
 type OrderService struct {
 	repo        repo.Repository
 	orderNumber int
-	mu          sync.Mutex
 }
 
 func NewOrderService(repo repo.Repository) OrderService {
@@ -21,46 +20,83 @@ func NewOrderService(repo repo.Repository) OrderService {
 	}
 }
 
-func (s *OrderService) Create(items []model.Item) error {
+func (s *OrderService) Create(items []model.Item) (*model.Order, error) {
+	order, err := s.createOrder(items)
+	if err != nil {
+		return nil, err
+	}
+
+	s.saveOrder(order)
+
+	return order, nil
+}
+
+func (s *OrderService) CreateMany(buckets [][]model.Item) error {
+	ordersChannel := make(chan *model.Order)
+
+	go func() {
+		for _, v := range buckets {
+			order, err := s.createOrder(v)
+			if err != nil {
+				fmt.Println(err)
+				panic(err)
+			}
+
+			ordersChannel <- order
+		}
+
+		close(ordersChannel)
+	}()
+
+	var wg sync.WaitGroup
+
+	// for {
+	// 	msg, ok := <-ordersChannel
+	// 	if !ok {
+	// 		break
+	// 	}
+
+	// 	wg.Add(1)
+	// 	go func(order *model.Order) {
+	// 		s.saveOrder(order)
+	// 		wg.Done()
+	// 	}(msg)
+	// }
+
+	for msg := range ordersChannel {
+		wg.Add(1)
+		go func(order *model.Order) {
+			s.saveOrder(order)
+			wg.Done()
+		}(msg)
+	}
+
+	wg.Wait()
+
+	return nil
+}
+
+func (s *OrderService) createOrder(items []model.Item) (*model.Order, error) {
 	var total float32
 	for _, item := range items {
 		total += item.Price
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	order := model.Order{
 		Id:    s.orderNumber,
 		Items: items,
 		Total: total,
 	}
 
-	err := s.repo.Save(order)
-	if err != nil {
-		return err
-	}
-
 	s.orderNumber++
 
-	return nil
+	return &order, nil
 }
 
-func (s *OrderService) CreateMany(buckets [][]model.Item) error {
-	var wg sync.WaitGroup
-
-	for _, v := range buckets {
-		wg.Add(1)
-
-		go func(items []model.Item) {
-			defer wg.Done()
-			err := s.Create(items)
-			if err != nil {
-				fmt.Println(err)
-			}
-		}(v)
+func (s *OrderService) saveOrder(order *model.Order) {
+	err := s.repo.Save(order)
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
 	}
-
-	wg.Wait()
-
-	return nil
 }
